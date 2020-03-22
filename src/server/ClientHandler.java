@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 public class ClientHandler {
 
@@ -25,7 +26,8 @@ public class ClientHandler {
 
             new Thread(() -> {
                 try {
-//                    socket.setSoTimeout(3000);
+                    socket.setSoTimeout(120000);
+                    System.out.println("Таймаут установлен - 120 ceк");
 
                     //цикл аутентификации
                     while (true) {
@@ -61,6 +63,8 @@ public class ClientHandler {
                                     nick = newNick;
                                     server.subscribe(this);
                                     System.out.println("Клиент " + nick + " прошел аутентификацию");
+                                    socket.setSoTimeout(0);
+                                    System.out.println("Таймаут сокета отключен");
                                     break;
                                 } else {
                                     sendMsg("С этим логином уже авторизовались");
@@ -92,6 +96,13 @@ public class ClientHandler {
                         } else {
                             server.broadcastMsg(nick, str);
                         }
+                    }
+                }catch(SocketTimeoutException e){
+                    System.out.println("Socket Timeout !");
+                    try {
+                        socket.close();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
                     }
                 } catch (RuntimeException e) {
                     System.out.println(e.getMessage());
